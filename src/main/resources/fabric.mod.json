@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "tlaughmod",
+  "version": "${version}",
+  "name": "T-Laugh Mod",
+  "description": "A goofy feather animation and pose mod.",
+  "authors": ["Cozynxis"],
+  "environment": "*",
+  "entrypoints": {
+    "main": ["nl.cozynxis.tlaughmod.TLaughMod"],
+    "client": ["nl.cozynxis.tlaughmod.client.TLaughModClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}
