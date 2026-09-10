@@ -1,7 +1,5 @@
 package nl.cozynxis.tlaughmod.client.mixin;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import nl.cozynxis.tlaughmod.client.TLaughModClient;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -44,44 +42,18 @@ public abstract class PlayerModelMixin extends HumanoidModel<AvatarRenderState> 
         this.leftLeg.zRot = 0.24f - wobble * 0.24f;
 
         if (TLaughModClient.isFeatherAnimationActive()) {
+            // Stronger laugh-like cartoon wobble without injecting into the 26.2 render pipeline.
             this.body.zRot = wobble * 0.72f;
             this.body.xRot = snap * 0.035f;
             this.head.zRot = -wobble * 0.48f;
             this.head.xRot += fast * 0.045f;
             this.rightLeg.xRot += snap * 0.07f;
             this.leftLeg.xRot -= snap * 0.07f;
+
+            // Extra arm motion keeps the visual effect energetic while remaining compatible
+            // with Minecraft 26.2's PlayerModel render-state architecture.
+            this.rightArm.yRot = 0.10f + snap * 0.10f;
+            this.leftArm.yRot = -0.10f - snap * 0.10f;
         }
-    }
-
-    // Re-render the player's own Minecraft arm geometry as two animated helper arms.
-    // They use the same active player texture/VertexConsumer as the normal model.
-    @Inject(method = "renderToBuffer", at = @At("TAIL"))
-    private void tlaughmod$renderHelperArms(
-        PoseStack poseStack,
-        VertexConsumer vertexConsumer,
-        int packedLight,
-        int packedOverlay,
-        int color,
-        CallbackInfo ci
-    ) {
-        if (!TLaughModClient.isFeatherAnimationActive()) {
-            return;
-        }
-
-        float time = (System.nanoTime() / 1_000_000_000.0f);
-        float sweep = (float) Math.sin(time * 18.0f);
-        float jab = (float) Math.sin(time * 30.0f);
-
-        poseStack.pushPose();
-        poseStack.translate(-0.28 + sweep * 0.045, 0.10 + jab * 0.012, 0.16);
-        poseStack.scale(0.78f, 0.78f, 0.78f);
-        this.rightArm.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
-        poseStack.popPose();
-
-        poseStack.pushPose();
-        poseStack.translate(0.28 - sweep * 0.045, 0.10 - jab * 0.012, 0.16);
-        poseStack.scale(0.78f, 0.78f, 0.78f);
-        this.leftArm.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
-        poseStack.popPose();
     }
 }
