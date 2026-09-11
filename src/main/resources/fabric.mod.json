@@ -3,16 +3,13 @@
   "id": "tlaughmod",
   "version": "${version}",
   "name": "T-Laugh Mod",
-  "description": "A goofy feather animation and pose mod.",
+  "description": "A goofy client-side cartoon animation and particle effects mod.",
   "authors": ["Cozynxis"],
-  "environment": "*",
+  "environment": "client",
   "entrypoints": {
     "main": ["nl.cozynxis.tlaughmod.TLaughMod"],
     "client": ["nl.cozynxis.tlaughmod.client.TLaughModClient"]
   },
-  "mixins": [
-    "tlaughmod.client.mixins.json"
-  ],
   "depends": {
     "fabricloader": ">=0.19.3",
     "minecraft": "~26.2",
