@@ -32,17 +32,26 @@ public final class HelperArmsRenderLayer extends RenderLayer<AvatarRenderState, 
         }
 
         PlayerModel model = getParentModel();
-        float time = (System.nanoTime() / 1_000_000_000.0f) * (1.45f + TLaughModClient.getSpeed() * 0.30f);
-        float sweep = (float) Math.sin(time * 4.2f);
-        float tap = (float) Math.sin(time * 8.4f);
+        float time = (System.nanoTime() / 1_000_000_000.0f)
+            * (1.35f + TLaughModClient.getSpeed() * 0.28f);
+
+        float sweep = (float) Math.sin(time * 4.4f);
+        float quick = (float) Math.sin(time * 8.8f);
+        float bob = (float) Math.cos(time * 6.2f);
 
         var skinTexture = state.skin.body().texturePath();
         RenderType renderType = RenderTypes.entityTranslucentCullItemTarget(skinTexture);
 
-        // Two extra blocky Minecraft arms, offset slightly behind the player and
-        // moving inward/outward beside the torso in a cartoon style.
-        submitHelperArm(poseStack, nodeCollector, model.rightArm, renderType, light, -1.0f, sweep, tap);
-        submitHelperArm(poseStack, nodeCollector, model.leftArm, renderType, light, 1.0f, -sweep, -tap);
+        // Extra vanilla-style Minecraft arms. They sit clearly OUTSIDE and slightly
+        // BEHIND the player's torso, then sweep inward/outward along the torso sides.
+        submitHelperArm(
+            poseStack, nodeCollector, model.rightArm, renderType, light,
+            -1.0f, sweep, quick, bob
+        );
+        submitHelperArm(
+            poseStack, nodeCollector, model.leftArm, renderType, light,
+            1.0f, -sweep, -quick, -bob
+        );
     }
 
     private static void submitHelperArm(
@@ -53,16 +62,25 @@ public final class HelperArmsRenderLayer extends RenderLayer<AvatarRenderState, 
         int light,
         float side,
         float sweep,
-        float tap
+        float quick,
+        float bob
     ) {
         poseStack.pushPose();
 
-        // Offset from the player's regular arm position. Positive Z places these
-        // slightly behind the player in model space; X keeps each one beside the torso.
-        poseStack.translate(side * (0.18f + sweep * 0.025f), 0.07f + tap * 0.012f, 0.18f);
-        poseStack.mulPose(Axis.XP.rotation(-0.48f + tap * 0.15f));
-        poseStack.mulPose(Axis.ZP.rotation(side * (0.58f + sweep * 0.20f)));
-        poseStack.scale(0.90f, 0.90f, 0.90f);
+        // The previous values were too close to the body and caused clipping.
+        // These offsets keep the helper arms beside the model, with enough rear depth
+        // to make them look like separate arms approaching from behind.
+        float outward = 0.52f + sweep * 0.095f;
+        float vertical = 0.08f + bob * 0.028f;
+        float behind = 0.34f + quick * 0.018f;
+
+        poseStack.translate(side * outward, vertical, behind);
+
+        // Angle the arms toward the torso while keeping their bases clearly outside it.
+        poseStack.mulPose(Axis.XP.rotation(-0.62f + quick * 0.14f));
+        poseStack.mulPose(Axis.YP.rotation(side * (-0.22f + sweep * 0.10f)));
+        poseStack.mulPose(Axis.ZP.rotation(side * (0.94f + quick * 0.17f)));
+        poseStack.scale(0.84f, 0.84f, 0.84f);
 
         nodeCollector.submitModelPart(
             arm,
