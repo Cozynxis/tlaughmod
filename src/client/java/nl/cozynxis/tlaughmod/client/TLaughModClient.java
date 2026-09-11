@@ -1,10 +1,13 @@
 package nl.cozynxis.tlaughmod.client;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import nl.cozynxis.tlaughmod.client.render.HelperArmsRenderLayer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityRenderLayerRegistrationCallback;
+import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -13,6 +16,7 @@ import net.minecraft.world.item.Items;
 public class TLaughModClient implements ClientModInitializer {
     private static boolean animationActive = false;
     private static boolean particlesEnabled = true;
+    private static boolean helperArmsEnabled = true;
     private static long animationTicks = 0L;
     private static int intensity = 3;
     private static int speed = 3;
@@ -20,6 +24,7 @@ public class TLaughModClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         registerCommands();
+        registerHelperArms();
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || client.level == null) {
@@ -68,6 +73,15 @@ public class TLaughModClient implements ClientModInitializer {
         });
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void registerHelperArms() {
+        LivingEntityRenderLayerRegistrationCallback.EVENT.register((entityType, entityRenderer, registrationHelper, context) -> {
+            if (entityRenderer instanceof AvatarRenderer avatarRenderer) {
+                registrationHelper.register(new HelperArmsRenderLayer(avatarRenderer));
+            }
+        });
+    }
+
     private static void registerCommands() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             dispatcher.register(ClientCommands.literal("tlaugh")
@@ -94,6 +108,7 @@ public class TLaughModClient implements ClientModInitializer {
                     context.getSource().sendFeedback(Component.literal(
                         "T-Laugh: " + (animationActive ? "ON" : "OFF")
                             + " | particles: " + (particlesEnabled ? "ON" : "OFF")
+                            + " | helper arms: " + (helperArmsEnabled ? "ON" : "OFF")
                             + " | intensity: " + intensity + "/5"
                             + " | speed: " + speed + "/5"
                     ));
@@ -108,6 +123,17 @@ public class TLaughModClient implements ClientModInitializer {
                     .then(ClientCommands.literal("off").executes(context -> {
                         particlesEnabled = false;
                         context.getSource().sendFeedback(Component.literal("T-Laugh particles disabled."));
+                        return 1;
+                    })))
+                .then(ClientCommands.literal("arms")
+                    .then(ClientCommands.literal("on").executes(context -> {
+                        helperArmsEnabled = true;
+                        context.getSource().sendFeedback(Component.literal("T-Laugh helper arms enabled."));
+                        return 1;
+                    }))
+                    .then(ClientCommands.literal("off").executes(context -> {
+                        helperArmsEnabled = false;
+                        context.getSource().sendFeedback(Component.literal("T-Laugh helper arms disabled."));
                         return 1;
                     })))
                 .then(ClientCommands.literal("intensity")
@@ -143,7 +169,6 @@ public class TLaughModClient implements ClientModInitializer {
                 }))
             );
 
-            // Backwards-compatible aliases from older versions.
             dispatcher.register(ClientCommands.literal("ticklestart").executes(context -> {
                 animationActive = true;
                 context.getSource().sendFeedback(Component.literal("T-Laugh animation started."));
@@ -176,6 +201,7 @@ public class TLaughModClient implements ClientModInitializer {
         speed = newSpeed;
         animationActive = true;
         particlesEnabled = true;
+        helperArmsEnabled = true;
         context.getSource().sendFeedback(Component.literal(
             "T-Laugh preset '" + name + "' enabled (intensity " + intensity + "/5, speed " + speed + "/5)."
         ));
@@ -225,5 +251,17 @@ public class TLaughModClient implements ClientModInitializer {
             double vz = Math.sin(angle) * 0.025;
             client.level.addParticle(feather, x, y, z, vx, vy, vz);
         }
+    }
+
+    public static boolean isAnimationActive() {
+        return animationActive;
+    }
+
+    public static boolean areHelperArmsEnabled() {
+        return helperArmsEnabled;
+    }
+
+    public static int getSpeed() {
+        return speed;
     }
 }
